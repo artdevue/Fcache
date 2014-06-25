@@ -44,11 +44,17 @@ Open your Laravel config file config/cache.php and change driver.
 ```php
 'driver' => 'fcache',
 ```
-**Note!** All commands are identical to the driver file cache, except *flush*
+**Note!** All commands are identical to the driver file cache, except *forget*
 
 To create a directory cache, enough to separate the slash key directory, the file will be the last word.
 
-For example, create the key *folder/onesubfolder/onefile* , The system will create subfolders - *folder* and *onesubfolder*, and the file *onefile.cache*
+For example, create the key *folder/onesubfolder/onefile*.
+
+ ```php
+Cache::put('folder/onesubfolder/onefile', 'value', $minutes);
+```
+
+The system will create subfolders - *folder* and *onesubfolder*, and the file *onefile.cache*
 ```php
 folder
 	onesubfolder
@@ -60,49 +66,19 @@ folder
 file.cache
 ```
 With the file cache Fcache, we can delete the entire cache, and the cache folder.
-
-
-
-
-**Note!** If you have a web site is not connected JQuery, then the call must specify the *&jsConnect=`true`*, and the call should look like this
+To delete a file *folder/onesubfolder/onefile.cache*
 
 ```php
-[[likeCssjs? &jsConnect=`true`]]
+Cache::forget('folder/onesubfolder/onefile');
 ```
-
-## Basic Configuration
-
-Before you start using LikeDislike, you can customize it to fit your work priorities. You can configure Cookies, IP and user id
-
-The main settings are located in LikeDislike System Settings, in the section *"likedislike"*.
-
-All tips are described in the comments for each configuration.
-
-## Admin panel
-
-By selecting the top menu under *"Components"* - LikeDislike, you are in control LikeDislike.
-
-You can keep track of your objects, delete them, close the vote. Added to the blocked IP addresses of users who are not eligible to vote.
-
-## Creating
-
-You can create LikeDislike click anywhere on the page. To do this, add the snippet call:
-
+If we need to remove all the files in a directory *folder/onesubfolder*, then pass the key *folder/onesubfolder*.
 ```php
-[[!LikeDislike? &name=`ITEM_NAME`]]
+Cache::forget('folder/onesubfolder');
 ```
 
-The item name (ITEM_NAME) may be omitted if you visit a call LikeDislike, because the default name equally **pagetitle**.
+You can group your cache folders, so you can delete the group cache files.
 
-**Remember!** , that the element name must be unique on a single resource or exclusion.
-
-Call LikeDislike should **NOT CACHE**
-
-## Added property to display the results in the field of TV or a resource 
-
-in more [detail](http://like.artdevue.com/en/help.html#output-target)
-
-### More on the election of the template and output format on the page [help](http://like.artdevue.com/en/help.html)
+`
 
 ### Authors
 <table>
