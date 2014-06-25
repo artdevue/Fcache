@@ -5,9 +5,17 @@
  * Date: 25.06.14
  * Time: 10:36
  */
-use Illuminate\Cache\StoreInterface;
+use Illuminate\Cache\StoreInterface,
+    Illuminate\Filesystem\Filesystem;
 
 class Fcache implements StoreInterface {
+
+    /**
+     * The Illuminate Filesystem instance.
+     *
+     * @var \Illuminate\Filesystem\Filesystem
+     */
+    protected $files;
 
     /**
      * A string that should be prepended to keys.
@@ -17,6 +25,13 @@ class Fcache implements StoreInterface {
     protected $prefix;
 
     /**
+     * The file cache directory
+     *
+     * @var string
+     */
+    protected $directory;
+
+    /**
      * Create a new Dummy cache store.
      *
      * @param  string  $prefix
@@ -24,7 +39,9 @@ class Fcache implements StoreInterface {
      */
     public function __construct($prefix = '')
     {
+        $this->files = new Filesystem;
         $this->prefix = $prefix;
+        $this->directory = \Config::get('cache.path');
     }
 
     /**
@@ -35,7 +52,31 @@ class Fcache implements StoreInterface {
      */
     public function get($key)
     {
-        return null;    // never retrieve an item
+        $path = $this->path($key);
+
+        if ( ! $this->files->exists($path))
+        {
+            return null;
+        }
+
+        try
+        {
+            $expire = substr($contents = $this->files->get($path), 0, 10);
+        }
+        catch (\Exception $e)
+        {
+            return null;
+        }
+
+        // If the current time is greater than expiration timestamps we will delete
+        // the file and return null. This helps clean up the old files and keeps
+        // this directory much cleaner for us as old files aren't hanging out.
+        if (time() >= $expire)
+        {
+            return $this->forget($key);
+        }
+
+        return unserialize(substr($contents, 10));
     }
 
     /**
@@ -48,7 +89,29 @@ class Fcache implements StoreInterface {
      */
     public function put($key, $value, $minutes)
     {
-        // do nothing
+        $value = $this->expiration($minutes).serialize($value);
+
+        $this->createCacheDirectory($path = $this->path($key));
+
+        $this->files->put($path, $value);
+    }
+
+    /**
+     * Create the file cache directory if necessary.
+     *
+     * @param  string  $path
+     * @return void
+     */
+    protected function createCacheDirectory($path)
+    {
+        try
+        {
+            $this->files->makeDirectory(dirname($path), 0777, true, true);
+        }
+        catch (\Exception $e)
+        {
+            //
+        }
     }
 
     /**
@@ -88,7 +151,7 @@ class Fcache implements StoreInterface {
      */
     public function forever($key, $value)
     {
-        // do nothing
+        return $this->put($key, $value, 0);
     }
 
     /**
@@ -99,17 +162,47 @@ class Fcache implements StoreInterface {
      */
     public function forget($key)
     {
-        // do nothing
+        $file = $this->path($key);
+
+        if ($this->files->exists($file))
+        {
+            $this->files->delete($file);
+        }
     }
 
     /**
      * Remove all items from the cache.
      *
+     * @param  string  $tag
      * @return void
      */
-    public function flush()
+    public function flush($tag = '')
     {
-        // do nothing
+        $tag = !empty($tag) ? '/' . $tag : '';
+        foreach ($this->files->directories($this->directory.$tag) as $directory)
+        {
+            $this->files->deleteDirectory($directory);
+        }
+    }
+
+    /**
+     * Get the Filesystem instance.
+     *
+     * @return \Illuminate\Filesystem\Filesystem
+     */
+    public function getFilesystem()
+    {
+        return $this->files;
+    }
+
+    /**
+     * Get the working directory of the cache.
+     *
+     * @return string
+     */
+    public function getDirectory()
+    {
+        return $this->directory;
     }
 
     /**
@@ -120,5 +213,41 @@ class Fcache implements StoreInterface {
     public function getPrefix()
     {
         return $this->prefix;
+    }
+
+    /**
+     * Get the full path for the given cache key.
+     *
+     * @param  string  $key
+     * @return string
+     */
+    protected function path($key)
+    {
+        /*$parts = '';
+        $array = explode('/',$key);
+
+        $ph = array_diff($array, array(end($array)));
+
+        if (count($ph > 0))
+            $parts = implode('/',$ph) . '/';
+
+        return $this->directory.'/'. $parts . end($array) . '.cache';*/
+
+        $prefix = !empty($this->prefix) ? $this->prefix . '/' : '';
+
+        return $this->directory.'/'. $prefix . trim($key, "/") . '.cache';
+    }
+
+    /**
+     * Get the expiration time based on the given minutes.
+     *
+     * @param  int  $minutes
+     * @return int
+     */
+    protected function expiration($minutes)
+    {
+        if ($minutes === 0) return 9999999999;
+
+        return time() + ($minutes * 60);
     }
 }

@@ -2,6 +2,7 @@
     "name": "artdevue/fcache",
     "description": "Driver file cache, separation key-folder, Laravel 4 integration",
     "keywords": ["cache", "folder", "laravel", "file"],
+    "homepage": "http://github.com/artdevue/Fcache",
     "license": "MIT",
     "authors": [
         {
