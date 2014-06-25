@@ -168,6 +168,14 @@ class Fcache implements StoreInterface {
         {
             $this->files->delete($file);
         }
+        else
+        {
+            $folder = substr($file, 0, -6);
+            if ($this->files->exists($folder))
+            {
+                $this->files->deleteDirectory($folder);
+            }
+        }
     }
 
     /**
@@ -176,10 +184,9 @@ class Fcache implements StoreInterface {
      * @param  string  $tag
      * @return void
      */
-    public function flush($tag = '')
+    public function flush()
     {
-        $tag = !empty($tag) ? '/' . $tag : '';
-        foreach ($this->files->directories($this->directory.$tag) as $directory)
+        foreach ($this->files->directories($this->directory) as $directory)
         {
             $this->files->deleteDirectory($directory);
         }
