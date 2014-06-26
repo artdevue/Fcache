@@ -6,7 +6,8 @@
  * Time: 10:36
  */
 use Illuminate\Cache\StoreInterface,
-    Illuminate\Filesystem\Filesystem;
+    Illuminate\Filesystem\Filesystem,
+    Closure;
 
 class Fcache implements StoreInterface {
 
@@ -25,11 +26,25 @@ class Fcache implements StoreInterface {
     protected $prefix;
 
     /**
+     * A string tags.
+     *
+     * @var string
+     */
+    protected $tags;
+
+    /**
      * The file cache directory
      *
      * @var string
      */
     protected $directory;
+
+    /**
+     * The file cache directory for Tags
+     *
+     * @var string
+     */
+    protected $directoryTags;
 
     /**
      * Create a new Dummy cache store.
@@ -42,6 +57,8 @@ class Fcache implements StoreInterface {
         $this->files = new Filesystem;
         $this->prefix = $prefix;
         $this->directory = \Config::get('cache.path');
+        $this->tags = array();
+        $this->directoryTags = $this->directory . (!empty($prefix) ? '/' . $prefix : '') . '/tags';
     }
 
     /**
@@ -93,7 +110,101 @@ class Fcache implements StoreInterface {
 
         $this->createCacheDirectory($path = $this->path($key));
 
+        if (!empty($this->tags))
+            $this->_setTags($path);
+
         $this->files->put($path, $value);
+    }
+
+    /**
+     * Tags for cache.
+     *
+     * @param  string  $string
+     * @return object
+     */
+    public function tags($string)
+    {
+        $string_array = explode(',', $string);
+        array_walk($string_array, 'trim');
+
+        $this->tags = $string_array;
+
+        return $this;
+    }
+
+    /**
+     * Save Tags for cache.
+     *
+     * @param  string  $path
+     * @return null
+     */
+    private function _setTags($path)
+    {
+
+        foreach ($this->tags as $tg)
+        {
+            $file = $this->directoryTags . '/'. $tg;
+            if (!$this->files->exists($file))
+            {
+                $this->createCacheDirectory($file);
+                $this->files->put($file, $path);
+            }
+            else
+            {
+                $farr = file($file);
+                if (!in_array($path, $farr))
+                {
+                    file_put_contents($file,"\n$path", FILE_APPEND);
+                }
+            }
+
+        }
+        $this->tags = array();
+    }
+
+    /**
+     * Get an item from the cache, or store the default value.
+     *
+     * @param  string  $key
+     * @param  \DateTime|int  $minutes
+     * @param  Closure  $callback
+     * @return mixed
+     */
+    public function remember($key, $minutes, Closure $callback)
+    {
+        // If the item exists in the cache we will just return this immediately
+        // otherwise we will execute the given Closure and cache the result
+        // of that execution for the given number of minutes in storage.
+        if ( ! is_null($value = $this->get($key)))
+        {
+            return $value;
+        }
+
+        $this->put($key, $value = $callback(), $minutes);
+
+        return $value;
+    }
+
+    /**
+     * Get an item from the cache, or store the default value forever.
+     *
+     * @param  string   $key
+     * @param  Closure  $callback
+     * @return mixed
+     */
+    public function rememberForever($key, Closure $callback)
+    {
+        // If the item exists in the cache we will just return this immediately
+        // otherwise we will execute the given Closure and cache the result
+        // of that execution for the given number of minutes. It's easy.
+        if ( ! is_null($value = $this->get($key)))
+        {
+            return $value;
+        }
+
+        $this->forever($key, $value = $callback());
+
+        return $value;
     }
 
     /**
@@ -152,6 +263,33 @@ class Fcache implements StoreInterface {
     public function forever($key, $value)
     {
         return $this->put($key, $value, 0);
+    }
+
+    /**
+     * Remove an item from the cache by tags.
+     *
+     * @param  string  $string
+     * @return void
+     */
+    public function forgetTags($string)
+    {
+        $string_array = explode(',', $string);
+        array_walk($string_array, 'trim');
+
+        foreach ($string_array as $sa)
+        {
+            $file = $this->directoryTags . '/'. $sa;
+            if ($this->files->exists($file))
+            {
+                $farr = file($file);
+                foreach ($farr as $f)
+                {
+                    if ($this->files->exists($f))
+                        unlink($f);
+                }
+                unlink($file);
+            }
+        }
     }
 
     /**

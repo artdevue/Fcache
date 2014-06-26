@@ -78,7 +78,30 @@ Cache::forget('folder/onesubfolder');
 
 You can group your cache folders, so you can delete the group cache files.
 
-`
+## Using tags
+File driver Fcache works with Tags. When you add a cache, you can use tags comma-separated parameter. 
+Example:
+ ```php
+Cache::tags('country,all')->put('key', 'value', $minutes);
+```
+or
+ ```php
+$value = Cache::tags('users,all')->rememberForever('users', function()
+{
+    return DB::table('users')->get();
+});
+```
+Now you can easily remove any cache tag. For example, to delete the cache tag with the *users*:
+ ```php
+Cache::forgetTags('users');
+```
+**Note!** If you want to delete the cache with different tags, select the parameter with a comma. 
+For example:
+ ```php
+Cache::forgetTags('users,all');
+```
+
+
 
 ### Authors
 <table>
