@@ -5,7 +5,7 @@
 
 ## Quick Start
 
-You can install this Image class quickly and easily with Composer.
+You can install this Fcache class quickly and easily with Composer.
 
 Require the package via Composer in your composer.json.
 
