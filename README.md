@@ -1,30 +1,30 @@
-# Driver file cache - Fcache
+# File cache driver - Fcache
 ========
 
-**Driver file cache, separation key-folder, Laravel 4 integration. Driver file cache folder Fcache builds based on the transmitted key.**
+**File cache driver distrubutes cache to folders depending to key-parameter. This is Laravel 4 integration of Fcache.**
 
 ## Quick Start
 
 You can install this Fcache class quickly and easily with Composer.
 
-Require the package via Composer in your composer.json.
+Edit your composer.json and add next:
 
 ```php
 "artdevue/fcache": "dev-master"
 ```
 
-Run Composer to install or update the new requirement. 
+Run Composer to install or update the new dependencies: 
 
 ```php
 $ composer update
 ```
 ## Laravel 4 Integration
 
-The Fcache Cache class supports Laravel 4 integration. Best practice to use the library in Laravel 4 is to add the ServiceProvider of the Intervention Fcache.
+The Fcache Cache class supports Laravel 4 integration. Best practice is to add the ServiceProvider of the Intervention Fcache in Laravel 4 installment.
 
-Open your Laravel config file config/app.php and add the following lines.
+Open your Laravel config file config/app.php and add the following:
 
-In the *$providers* array add the service providers for this package.
+In the *$providers* section add service providers for this package.
 
 ```php
 'Artdevue\Fcache\FcacheServiceProvider'
@@ -40,13 +40,13 @@ Cache::extend('fcache', function($app)
 ```
 ## Usage
 
-Open your Laravel config file config/cache.php and change driver.
+Open your Laravel config file config/cache.php and change driver to fcache.
 ```php
 'driver' => 'fcache',
 ```
 **Note!** All commands are identical to the driver file cache, except *forget*
 
-To create a directory cache, enough to separate the slash key directory, the file will be the last word.
+To create a directory cache it is enough to separate the slash key directory, the file will be the last word.
 
 For example, create the key *folder/onesubfolder/onefile*.
 
@@ -54,7 +54,7 @@ For example, create the key *folder/onesubfolder/onefile*.
 Cache::put('folder/onesubfolder/onefile', 'value', $minutes);
 ```
 
-The system will create subfolders - *folder* and *onesubfolder*, and the file *onefile.cache*
+The system automatically will create subfolders - *folder* and *onesubfolder*, and the file *onefile.cache*
 ```php
 folder
 	onesubfolder
@@ -65,21 +65,21 @@ folder
 		twofile.cache
 file.cache
 ```
-With the file cache Fcache, we can delete the entire cache, and the cache folder.
+With the file cache Fcache you can delete the entire cache, and the cache folder.
 To delete a file *folder/onesubfolder/onefile.cache*
 
 ```php
 Cache::forget('folder/onesubfolder/onefile');
 ```
-If we need to remove all the files in a directory *folder/onesubfolder*, then pass the key *folder/onesubfolder*.
+If you need to remove all the files in a directory *folder/onesubfolder*, then change the key to *folder/onesubfolder*.
 ```php
 Cache::forget('folder/onesubfolder');
 ```
 
-You can group your cache folders, so you can delete the group cache files.
+You can group your cache folders, it gives you ability to delete the whole group cache files.
 
 ## Using tags
-File driver Fcache works with Tags. When you add a cache, you can use tags comma-separated parameter. 
+Also file driver Fcache works with Tags. When you add a cache, you can use comma-separated parameter *tags*. 
 Example:
  ```php
 Cache::tags('country,all')->put('key', 'value', $minutes);
@@ -95,7 +95,7 @@ Now you can easily remove any cache tag. For example, to delete the cache tag wi
  ```php
 Cache::forgetTags('users');
 ```
-**Note!** If you want to delete the cache with different tags, select the parameter with a comma. 
+**Note!** If you want to delete the cache with different tags, assign comma-separated tags. 
 For example:
  ```php
 Cache::forgetTags('users,all');
