@@ -122,9 +122,12 @@ class Fcache implements StoreInterface {
      * @param  string  $string
      * @return object
      */
-    public function tags($string)
+    public function tags($tags)
     {
-        $string_array = explode(',', $string);
+        if(is_string($tags))
+            $string_array = explode(',', $tags);
+        else if(is_array($tags))
+            $string_array = $tags;
         array_walk($string_array, 'trim');
 
         $this->tags = $string_array;
